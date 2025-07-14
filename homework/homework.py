@@ -3,7 +3,6 @@ import gzip
 import json
 import pickle
 import pandas as pd
-import numpy as np
 
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
@@ -36,15 +35,27 @@ def split_data(train_df, test_df):
 
 def create_pipeline():
     categorical = ["EDUCATION", "SEX", "MARRIAGE"]
-    preprocessing = ColumnTransformer(
-        transformers=[("cat", OneHotEncoder(), categorical)],
-        remainder=MinMaxScaler()
+    numerical = [
+        "LIMIT_BAL", "AGE", "PAY_0", "PAY_2", "PAY_3", "PAY_4",
+        "PAY_5", "PAY_6", "BILL_AMT1", "BILL_AMT2", "BILL_AMT3",
+        "BILL_AMT4", "BILL_AMT5", "BILL_AMT6",
+        "PAY_AMT1", "PAY_AMT2", "PAY_AMT3",
+        "PAY_AMT4", "PAY_AMT5", "PAY_AMT6"
+    ]
+
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ("cat", OneHotEncoder(handle_unknown="ignore"), categorical),
+            ("num", MinMaxScaler(), numerical)
+        ]
     )
+
     pipeline = Pipeline(steps=[
-        ("preprocessing", preprocessing),
+        ("preprocessing", preprocessor),
         ("selector", SelectKBest(score_func=f_regression, k=10)),
         ("classifier", LogisticRegression(solver="liblinear", random_state=42))
     ])
+
     return pipeline
 
 def make_grid_search(pipeline):
@@ -86,12 +97,12 @@ def c_matrix(y_true, y_pred, dataset):
         "type": "cm_matrix",
         "dataset": dataset,
         "true_0": {
-            "predicted_0": int(cm[0, 0]),
-            "predicted_1": int(cm[0, 1])
+            "predicted_0": int(cm[0][0]),
+            "predicted_1": int(cm[0][1])
         },
         "true_1": {
-            "predicted_0": int(cm[1, 0]),
-            "predicted_1": int(cm[1, 1])
+            "predicted_0": int(cm[1][0]),
+            "predicted_1": int(cm[1][1])
         }
     }
 
@@ -107,11 +118,11 @@ def main():
     search = make_grid_search(pipeline)
     best_model = search.fit(X_train, y_train)
 
-    metrics_train, y_pred_train, y_train = check_estimator(best_model, X_train, y_train, "train")
-    metrics_test, y_pred_test, y_test = check_estimator(best_model, X_test, y_test, "test")
+    metrics_train, pred_train, y_train = check_estimator(best_model, X_train, y_train, "train")
+    metrics_test, pred_test, y_test = check_estimator(best_model, X_test, y_test, "test")
 
-    matrix_train = c_matrix(y_train, y_pred_train, "train")
-    matrix_test = c_matrix(y_test, y_pred_test, "test")
+    matrix_train = c_matrix(y_train, pred_train, "train")
+    matrix_test = c_matrix(y_test, pred_test, "test")
 
     with open("files/output/metrics.json", "w") as f:
         for record in [metrics_train, metrics_test, matrix_train, matrix_test]:
