@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.compose import ColumnTransformer
-from sklearn.feature_selection import SelectKBest, f_regression
+from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import MinMaxScaler
@@ -171,7 +171,7 @@ def create_pipeline():
     # Crear el pipeline con preprocesamiento y el modelo
     pipeline = Pipeline([
     ("preprocessor", preprocessor),
-    ("feature_selection", SelectKBest(score_func=f_regression, k=10)), # Seleccionar las 10 mejores características/vairables
+    ("feature_selection", SelectKBest(score_func=f_classif, k=10)), # Seleccionar las 10 mejores características/vairables
     ("classifier", LogisticRegression(max_iter=1000, random_state=42))
     ])
 
