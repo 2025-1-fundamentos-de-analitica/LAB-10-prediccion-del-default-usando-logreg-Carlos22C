@@ -156,11 +156,17 @@ def split_data(data_train, data_test):
 
 def create_pipeline():
     categorical_feature=['EDUCATION','SEX','MARRIAGE']
-
+    numerical_feature = ['PAY_0','PAY_2','PAY_3','PAY_4','PAY_5','PAY_6','BILL_AMT1','BILL_AMT2','BILL_AMT3','BILL_AMT4','BILL_AMT5','BILL_AMT6','PAY_AMT1','PAY_AMT2','PAY_AMT3','PAY_AMT4','PAY_AMT5','PAY_AMT6']
 
     # Crear el transformador para las columnas categóricas
     preprocessor = ColumnTransformer(
-    transformers=[('cat', OneHotEncoder(), categorical_feature)],remainder=MinMaxScaler())
+    transformers=[
+        ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_feature),
+        ("num", MinMaxScaler(), numerical_feature)
+    ],
+    remainder="drop"  # IMPORTANTE: No uses 'passthrough' ni 'MinMaxScaler()' aquí
+)
+
 
     # Crear el pipeline con preprocesamiento y el modelo
     pipeline = Pipeline([
